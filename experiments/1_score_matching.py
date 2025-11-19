@@ -21,13 +21,13 @@ import torch
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 
-from data import sample_batch, plot_swiss_roll
-from models import ScoreNet
-from losses import score_matching
-from utils import get_device, ensure_fig_dir, plot_all_trajectories, plot_gradients
-from sampling import sample_simple
+from src.data import sample_batch, plot_swiss_roll
+from src.models import ScoreNet
+from src.losses import score_matching
+from src.utils import get_device, ensure_fig_dir, plot_all_trajectories, plot_gradients
+from src.sampling import sample_simple
 
-FIG_DIR = Path("./figures_score_matching")
+FIG_DIR = Path("../results/score_matching")
 
 def main():
     ensure_fig_dir(FIG_DIR)
@@ -71,7 +71,7 @@ def main():
 
     # Simple gradient ascent sampling from one point
     x0 = torch.Tensor([1.5, -1.5]).to(device)
-    from utils import run_sampling, plot_trajectory
+    from src.utils import run_sampling, plot_trajectory
     samples = run_sampling(model, x0, device, sample_simple)
 
     # Plot gradients and the above trajectory

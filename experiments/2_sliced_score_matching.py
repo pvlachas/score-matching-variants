@@ -22,11 +22,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from data import sample_batch
-from losses import sliced_score_matching
-from utils import get_device, ensure_fig_dir, plot_gradients
+from src.data import sample_batch
+from src.losses import sliced_score_matching
+from src.utils import get_device, ensure_fig_dir, plot_gradients
 
-FIG_DIR = Path("./figures_sliced_score_matching")
+FIG_DIR = Path("../results/sliced_score_matching")
 
 def main():
     ensure_fig_dir(FIG_DIR)

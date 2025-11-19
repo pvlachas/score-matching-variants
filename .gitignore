@@ -1,5 +1,9 @@
 __pycache__/
+.venv/
+.qodo/
+.claude/
 .idea/
 figures/
 figures*/
+results/
 *.png
