@@ -1,6 +1,6 @@
 import torch
 import torch.autograd as autograd
-from utils import jacobian
+from .utils import jacobian
 
 def score_matching(model, samples, train=False):
     samples.requires_grad_(True)

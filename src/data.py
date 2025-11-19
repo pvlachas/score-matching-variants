@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_swiss_roll
-from helper_functions import hdr_plot_style
+from .helper_functions import hdr_plot_style
 
 hdr_plot_style()
 
