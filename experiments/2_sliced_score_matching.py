@@ -16,7 +16,11 @@ a much cheaper vector-Jacobian product (VJP), reducing complexity to O(N).
 This script demonstrates sliced score matching on a 2D Swiss roll dataset,
 training a neural network to estimate the score function ∇_x log p(x).
 """
+import sys
 from pathlib import Path
+
+# Add parent directory to path for src imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import torch
 import torch.nn as nn

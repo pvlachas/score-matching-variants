@@ -31,7 +31,11 @@ This idea laid the foundation for modern diffusion models (DDPMs, score SDEs).
 This script implements the key idea step by step on a toy 2D Swiss Roll dataset.
 """
 
+import sys
 from pathlib import Path
+
+# Add parent directory to path for src imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import torch
@@ -67,6 +71,74 @@ def main():
     plt.title("Swiss Roll Training Data")
     plt.savefig(str(FIG_DIR / "swiss_roll.png"), dpi=150, bbox_inches='tight')
     plt.close()
+
+
+    # -------------------------------------------------------------------
+    # 4. Train the NCSN
+    # -------------------------------------------------------------------
+
+    # Geometric noise schedule: large → small
+    sigma_begin = 1.0
+    sigma_end   = 0.01
+    num_classes = 5
+
+    sigmas = torch.tensor(
+        np.exp(np.linspace(np.log(sigma_begin), np.log(sigma_end), num_classes)),
+        dtype=torch.float32
+    )
+
+    model = ConditionalModel(num_classes)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    dataset = data_t
+
+    for t in range(5000):
+        labels = torch.randint(0, num_classes, (dataset.shape[0],))
+        loss = anneal_dsm_score_estimation(model, dataset, labels, sigmas)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if t % 1000 == 0:
+            print(f"[step {t}] loss = {loss.item():.4f}")
+
+
+    # -------------------------------------------------------------------
+    # 5. Visualize learned scores
+    # -------------------------------------------------------------------
+    """
+    We visualize the learned score field at:
+    • random noise levels (mixture)
+    • a specific noise level (e.g., σ₁ or σ_last)
+    This lets us see how the field changes across noise scales.
+    """
+
+    def plot_scores(label_choice, filename):
+        xx = np.stack(np.meshgrid(np.linspace(-1.5,2.0,50),
+                                  np.linspace(-1.5,2.0,50)), axis=-1).reshape(-1,2)
+        X = torch.tensor(xx, dtype=torch.float32)
+
+        if label_choice == "random":
+            labels = torch.randint(0, num_classes, (X.shape[0],))
+        else:
+            labels = torch.ones(X.shape[0]).long() * label_choice
+
+        scores = model(X, labels).detach().numpy()
+        scores_norm = np.linalg.norm(scores, axis=-1, keepdims=True)
+        scores_log1p = scores / (scores_norm + 1e-9) * np.log1p(scores_norm)
+
+        plt.figure(figsize=(8,6))
+        plt.scatter(data[:,0], data[:,1], alpha=0.3, s=10, color='red')
+        plt.quiver(*xx.T, *scores_log1p.T, width=0.002)
+        plt.title(f"Learned score field for noise index = {label_choice}")
+        plt.xlim(-1.5, 2.0)
+        plt.ylim(-1.5, 2.0)
+        plt.savefig(str(FIG_DIR / filename), dpi=150, bbox_inches='tight')
+        plt.close()
+
+    plot_scores("random", "scores_random.png")  # mixture over σ
+    plot_scores(0, "scores_highest_noise.png")  # highest noise
+    plot_scores(num_classes-1, "scores_lowest_noise.png")  # smallest noise
 
 
 # -------------------------------------------------------------------
@@ -160,74 +232,6 @@ class ConditionalModel(nn.Module):
         x = F.softplus(self.lin1(x, y))
         x = F.softplus(self.lin2(x, y))
         return self.lin3(x)
-
-
-    # -------------------------------------------------------------------
-    # 4. Train the NCSN
-    # -------------------------------------------------------------------
-
-    # Geometric noise schedule: large → small
-    sigma_begin = 1.0
-    sigma_end   = 0.01
-    num_classes = 5
-
-    sigmas = torch.tensor(
-        np.exp(np.linspace(np.log(sigma_begin), np.log(sigma_end), num_classes)),
-        dtype=torch.float32
-    )
-
-    model = ConditionalModel(num_classes)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    dataset = data_t
-
-    for t in range(5000):
-        labels = torch.randint(0, num_classes, (dataset.shape[0],))
-        loss = anneal_dsm_score_estimation(model, dataset, labels, sigmas)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if t % 1000 == 0:
-            print(f"[step {t}] loss = {loss.item():.4f}")
-
-
-    # -------------------------------------------------------------------
-    # 5. Visualize learned scores
-    # -------------------------------------------------------------------
-    """
-    We visualize the learned score field at:
-    • random noise levels (mixture)
-    • a specific noise level (e.g., σ₁ or σ_last)
-    This lets us see how the field changes across noise scales.
-    """
-
-    def plot_scores(label_choice, filename):
-        xx = np.stack(np.meshgrid(np.linspace(-1.5,2.0,50),
-                                  np.linspace(-1.5,2.0,50)), axis=-1).reshape(-1,2)
-        X = torch.tensor(xx, dtype=torch.float32)
-
-        if label_choice == "random":
-            labels = torch.randint(0, num_classes, (X.shape[0],))
-        else:
-            labels = torch.ones(X.shape[0]).long() * label_choice
-
-        scores = model(X, labels).detach().numpy()
-        scores_norm = np.linalg.norm(scores, axis=-1, keepdims=True)
-        scores_log1p = scores / (scores_norm + 1e-9) * np.log1p(scores_norm)
-
-        plt.figure(figsize=(8,6))
-        plt.scatter(data[:,0], data[:,1], alpha=0.3, s=10, color='red')
-        plt.quiver(*xx.T, *scores_log1p.T, width=0.002)
-        plt.title(f"Learned score field for noise index = {label_choice}")
-        plt.xlim(-1.5, 2.0)
-        plt.ylim(-1.5, 2.0)
-        plt.savefig(str(FIG_DIR / filename), dpi=150, bbox_inches='tight')
-        plt.close()
-
-    plot_scores("random", "scores_random.png")  # mixture over σ
-    plot_scores(0, "scores_highest_noise.png")  # highest noise
-    plot_scores(num_classes-1, "scores_lowest_noise.png")  # smallest noise
 
 
 if __name__ == "__main__":

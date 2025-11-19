@@ -9,8 +9,6 @@
 \usepackage{algorithmic}
 \usepackage{listings}
 \usepackage{xcolor}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta, positioning}
 \usepackage{hyperref}
 \usepackage[margin=1in]{geometry}
 
@@ -682,60 +680,6 @@ Chen et al. (2020) applied NCSNs to raw audio waveform generation:
 \item Provable benefits of score-based vs. adversarial training
 \end{enumerate}
 
-\section{Visualizations}
-
-\subsection{Score field on 2D data}
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=1.2]
-  % Axes
-  \draw[->] (-3.5,0) -- (3.5,0) node[right] {$x_1$};
-  \draw[->] (0,-3.5) -- (0,3.5) node[above] {$x_2$};
-  
-  % Simplified score field (radial pointing inward)
-  \foreach \x in {-3,-2,...,3}{
-    \foreach \y in {-3,-2,...,3}{
-      \pgfmathsetmacro{\dx}{-0.25*\x}
-      \pgfmathsetmacro{\dy}{-0.25*\y}
-      \draw[-{Latex[length=1.5mm]}, blue!70] 
-        (\x,\y) -- ++(\dx,\dy);
-    }
-  }
-  
-  % Data points on a curve
-  \draw[red, thick, domain=0:360, samples=60, smooth] 
-    plot ({0.3*\x*cos(\x)}, {0.3*\x*sin(\x)});
-  
-\end{tikzpicture}
-\caption{Learned score field (blue arrows) pointing toward data manifold (red curve). 
-The score provides gradient ascent directions toward high-density regions.}
-\end{figure}
-
-\subsection{Multi-scale denoising process}
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.9]
-  % Noise levels
-  \foreach \i/\label in {0/$\sigma_1$,2/$\sigma_2$,4/$\sigma_3$,6/$\sigma_K$}{
-    \node[draw, circle, minimum size=1.2cm, fill=blue!\i0!white] (n\i) at (\i*2,0) {\label};
-  }
-  
-  % Arrows
-  \draw[-{Latex[length=3mm]}, thick] (n0) -- (n2) 
-    node[midway, above] {Langevin};
-  \draw[-{Latex[length=3mm]}, thick] (n2) -- (n4) 
-    node[midway, above] {Langevin};
-  \draw[-{Latex[length=3mm]}, thick, dashed] (n4) -- (n6) 
-    node[midway, above] {Langevin};
-  
-  % Labels
-  \node[above] at (n0.north) {Large noise};
-  \node[above] at (n6.north) {Small noise};
-  \node[below=0.5cm] at (3,-0.5) {Progressive refinement};
-\end{tikzpicture}
-\caption{Annealed sampling: progressively refine samples across decreasing noise levels, 
-using the corresponding conditional score at each stage.}
-\end{figure}
 
 \section{Conclusion}
 

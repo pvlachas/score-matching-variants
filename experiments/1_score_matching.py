@@ -8,7 +8,11 @@ This can be understood as learning the direction of highest probability at each 
 Therefore, when the model is trained, we can improve a sample x
 by moving it along the directions of highest probability.
 """
+import sys
 from pathlib import Path
+
+# Add parent directory to path for src imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 """
 In order to learn the score of the data distribution,
